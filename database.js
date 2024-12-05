@@ -95,10 +95,11 @@ function returnLocation(locationId) {
   const location = db
     .prepare(
       `
-        SELECT equipement_id, quantite
-        FROM locations
-        WHERE id = ?
-      `
+        SELECT e.nom AS equipement, l.locataire, l.date_prise, l.date_retour, l.quantite
+        FROM locations l
+        JOIN equipements e ON l.equipement_id = e.id
+        WHERE l.id = ?
+    `
     )
     .get(locationId);
 
@@ -109,14 +110,38 @@ function returnLocation(locationId) {
   // Réintégrer la quantité dans le stock
   db.prepare(
     `
-      UPDATE equipements
-      SET stock = stock + ?
-      WHERE id = ?
+        UPDATE equipements
+        SET stock = stock + ?
+        WHERE id = (
+            SELECT equipement_id
+            FROM locations
+            WHERE id = ?
+        )
     `
-  ).run(location.quantite, location.equipement_id);
+  ).run(location.quantite, locationId);
 
   // Supprimer la location
   db.prepare(`DELETE FROM locations WHERE id = ?`).run(locationId);
+
+  // Ajouter l'entrée dans l'historique
+  db.prepare(
+    `
+        INSERT INTO historique (equipement, locataire, date_prise, date_retour, quantite)
+        VALUES (?, ?, ?, ?, ?)
+    `
+  ).run(
+    location.equipement,
+    location.locataire,
+    location.date_prise,
+    location.date_retour,
+    location.quantite
+  );
+}
+function getHistorique() {
+  return db.prepare("SELECT * FROM historique").all();
+}
+function clearHistorique() {
+  db.prepare("DELETE FROM historique").run();
 }
 
 // Exporter toutes les fonctions
@@ -128,4 +153,6 @@ module.exports = {
   getLocations,
   addLocation,
   returnLocation,
+  getHistorique,
+  clearHistorique,
 };

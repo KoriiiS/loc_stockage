@@ -80,9 +80,44 @@ function navigateTo(view) {
       break;
 
     case "historique":
+      const historique = require("./database").getHistorique();
+      const historiqueHtml = historique
+        .map(
+          (h) => `
+              <tr>
+                  <td>${h.id}</td>
+                  <td>${h.equipement}</td>
+                  <td>${h.locataire}</td>
+                  <td>${h.date_prise}</td>
+                  <td>${h.date_retour}</td>
+                  <td>${h.quantite}</td>
+              </tr>
+          `
+        )
+        .join("");
+
       content = `
-                <h1>Historique</h1>
-                <p>Liste des locations précédentes.</p>`;
+          <h1>Historique</h1>
+          <button onclick="clearHistorique()">Vider l'historique</button>
+          <table>
+              <thead>
+                  <tr>
+                      <th>ID</th>
+                      <th>Équipement</th>
+                      <th>Locataire</th>
+                      <th>Date de prise</th>
+                      <th>Date de retour</th>
+                      <th>Quantité</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  ${
+                    historiqueHtml ||
+                    "<tr><td colspan='6'>Aucun historique disponible.</td></tr>"
+                  }
+              </tbody>
+          </table>
+        `;
       break;
 
     case "stock":
@@ -344,5 +379,15 @@ function returnEquipement(locationId) {
     // Gérer les erreurs éventuelles
     console.error("Erreur lors du retour de l'équipement :", error);
     showMessage("Erreur : Impossible de retourner l'équipement.", "error");
+  }
+}
+function clearHistorique() {
+  try {
+    require("./database").clearHistorique();
+    showMessage("Historique vidé avec succès !", "success");
+    navigateTo("historique"); // Recharge la vue pour mettre à jour l'affichage
+  } catch (error) {
+    console.error("Erreur lors du vidage de l'historique :", error);
+    showMessage("Erreur : Impossible de vider l'historique.", "error");
   }
 }

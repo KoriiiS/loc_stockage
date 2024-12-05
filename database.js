@@ -18,6 +18,15 @@ db.exec(`
         quantite INTEGER NOT NULL,
         FOREIGN KEY(equipement_id) REFERENCES equipements(id)
     );
+
+    CREATE TABLE IF NOT EXISTS historique (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    equipement TEXT NOT NULL,
+    locataire TEXT NOT NULL,
+    date_prise TEXT NOT NULL,
+    date_retour TEXT NOT NULL,
+    quantite INTEGER NOT NULL
+);
 `);
 
 // Fonctions pour gérer les équipements
@@ -89,7 +98,7 @@ function returnLocation(locationId) {
         SELECT equipement_id, quantite
         FROM locations
         WHERE id = ?
-    `
+      `
     )
     .get(locationId);
 
@@ -100,9 +109,9 @@ function returnLocation(locationId) {
   // Réintégrer la quantité dans le stock
   db.prepare(
     `
-        UPDATE equipements
-        SET stock = stock + ?
-        WHERE id = ?
+      UPDATE equipements
+      SET stock = stock + ?
+      WHERE id = ?
     `
   ).run(location.quantite, location.equipement_id);
 

@@ -245,21 +245,51 @@ function reloadView(view) {
 function showLoading(viewContainer) {
   viewContainer.innerHTML = "<p>Chargement en cours...</p>";
 }
-function showMessage(message) {
-  const viewContainer = document.getElementById("view-container");
+function showMessage(message, type = "success") {
+  const alertContainer = document.getElementById("alert-container");
+
+  if (!alertContainer) {
+    console.error("Erreur : Impossible de trouver l'élément alert-container.");
+    return;
+  }
+
+  // Déterminer la couleur de l'alerte
+  const backgroundColor = type === "success" ? "#4caf50" : "#f44336";
+
+  // Créer le HTML de l'alerte
   const messageHtml = `
-    <div id="message" style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: #4caf50; color: white; padding: 10px; border-radius: 5px;">
+    <div class="alert" style="
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: ${backgroundColor};
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 9999;
+      font-size: 16px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    ">
       ${message}
     </div>
   `;
-  viewContainer.insertAdjacentHTML("beforeend", messageHtml);
 
-  // Supprimer le message après 3 secondes
+  console.log("Insertion de l'alerte dans alert-container...");
+  alertContainer.insertAdjacentHTML("beforeend", messageHtml);
+
+  // Supprimer l'alerte après 3 secondes
   setTimeout(() => {
-    const messageElement = document.getElementById("message");
-    if (messageElement) messageElement.remove();
+    const alertElement = alertContainer.querySelector(".alert");
+    if (alertElement) {
+      console.log("Alerte supprimée du DOM.");
+      alertElement.remove();
+    } else {
+      console.error("Impossible de trouver l'alerte à supprimer.");
+    }
   }, 3000);
 }
+
 function addLocation(event) {
   event.preventDefault();
 
@@ -301,35 +331,18 @@ function addLocation(event) {
   navigateTo("equipementsLoues"); // Naviguer vers la liste des équipements loués après l'ajout
 }
 function returnEquipement(locationId) {
-  // Ajouter une confirmation pour le retour
-  if (!confirm("Confirmez-vous le retour de cet équipement ?")) return;
+  try {
+    // Appeler la fonction returnLocation définie dans database.js
+    require("./database").returnLocation(locationId);
 
-  const db = require("./database");
+    // Afficher une alerte de succès
+    showMessage("Équipement retourné avec succès !", "success");
 
-  // Récupérer les détails de la location
-  const location = db.getLocations().find((l) => l.id === locationId);
-
-  if (!location) {
-    showMessage("Erreur : Location introuvable.");
-    return;
+    // Recharger la vue des équipements loués
+    navigateTo("equipementsLoues");
+  } catch (error) {
+    // Gérer les erreurs éventuelles
+    console.error("Erreur lors du retour de l'équipement :", error);
+    showMessage("Erreur : Impossible de retourner l'équipement.", "error");
   }
-
-  // Réintégrer la quantité dans le stock
-  db.prepare(
-    `
-      UPDATE equipements
-      SET stock = stock + ?
-      WHERE id = (
-          SELECT equipement_id
-          FROM locations
-          WHERE id = ?
-      )
-  `
-  ).run(location.quantite, locationId);
-
-  // Supprimer la location
-  db.prepare(`DELETE FROM locations WHERE id = ?`).run(locationId);
-
-  showMessage("Équipement retourné avec succès !");
-  navigateTo("equipementsLoues"); // Recharge la vue
 }

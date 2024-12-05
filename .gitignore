@@ -1,0 +1,4 @@
+# Ignorer les fichiers générés
+dist/
+node_modules/
+*.exe

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion Locations</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2>Gestion Locations</h2>
+            <nav>
+                <ul>
+                    <li><a href="#" onclick="navigateTo('equipementsLoues')">Équipements Loués</a></li>
+                    <li><a href="#" onclick="navigateTo('ajouterLocation')">Ajouter une Location</a></li>
+                    <li><a href="#" onclick="navigateTo('historique')">Historique</a></li>
+                    <li><a href="#" onclick="navigateTo('stock')">Stock</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <div id="view-container">
+                <!-- Vue par défaut -->
+                <h1>Bienvenue dans la gestion des locations</h1>
+                <p>Choisissez une option dans le menu pour commencer.</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

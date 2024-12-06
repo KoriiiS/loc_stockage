@@ -122,50 +122,64 @@ function navigateTo(view) {
 
     case "stock":
       try {
-        // Récupérer les équipements depuis la base de données
         const equipements = require("./database").getEquipements();
+        const categories = require("./database").getCategories();
 
-        // Générer dynamiquement le tableau des équipements
+        const categoriesOptions = categories
+          .map((c) => `<option value="${c.id}">${c.nom}</option>`)
+          .join("");
+
         const equipementsHtml = equipements
           .map(
             (e) => `
                 <tr>
-                    <td>${e.id}</td>
-                    <td>${e.nom}</td>
-                    <td>${e.stock}</td>
-                    <td>
-                        <button onclick="editEquipement(${e.id}, '${e.nom}', ${e.stock})">Modifier</button>
-                        <button onclick="deleteEquipement(${e.id})">Supprimer</button>
-                    </td>
+                  <td>${e.id}</td>
+                  <td>${e.nom}</td>
+                  <td>${e.stock}</td>
+                  <td>${
+                    categories.find((c) => c.id === e.categorie_id)?.nom ||
+                    "Aucune"
+                  }</td>
+                  <td>
+                    <button onclick="editEquipement(${e.id}, '${e.nom}', ${
+              e.stock
+            })">Modifier</button>
+                    <button onclick="deleteEquipement(${
+                      e.id
+                    })">Supprimer</button>
+                  </td>
                 </tr>
-            `
+              `
           )
           .join("");
 
-        // Contenu de la vue "Stock"
         content = `
-                <h1>Stock</h1>
-                <form onsubmit="addEquipement(event)">
-                    <input type="text" id="nom" placeholder="Nom de l'équipement" required />
-                    <input type="number" id="stock" placeholder="Quantité" required />
-                    <button type="submit">Ajouter</button>
-                </form>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nom</th>
-                            <th>Quantité</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${equipementsHtml}
-                    </tbody>
-                </table>`;
+            <h1>Stock</h1>
+            <form onsubmit="addEquipement(event)">
+                <input type="text" id="nom" placeholder="Nom de l'équipement" required />
+                <input type="number" id="stock" placeholder="Quantité" required />
+                <select id="categorie" required>
+                    <option value="" disabled selected>Choisissez une catégorie</option>
+                    ${categoriesOptions}
+                </select>
+                <button type="submit">Ajouter</button>
+            </form>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Quantité</th>
+                        <th>Catégorie</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${equipementsHtml}
+                </tbody>
+            </table>`;
       } catch (error) {
         console.error("Erreur lors du chargement des équipements :", error);
-        // Afficher un message d'erreur si la récupération échoue
         content = "<p>Erreur : Impossible de charger le stock.</p>";
       }
       break;
@@ -192,15 +206,16 @@ function addEquipement(event) {
   event.preventDefault();
   const nom = document.getElementById("nom").value;
   const stock = parseInt(document.getElementById("stock").value);
+  const categorie = parseInt(document.getElementById("categorie").value);
 
-  if (!nom || isNaN(stock) || stock < 0) {
-    showMessage("Veuillez fournir un nom valide et une quantité positive.");
+  if (!nom || isNaN(stock) || stock < 0 || !categorie) {
+    showMessage("Veuillez remplir tous les champs correctement.", "error");
     return;
   }
 
-  require("./database").addEquipement(nom, stock);
-  showMessage("Équipement ajouté avec succès !");
-  navigateTo("stock"); // Recharge la vue
+  require("./database").addEquipement(nom, stock, categorie);
+  showMessage("Équipement ajouté avec succès !", "success");
+  navigateTo("stock");
 }
 
 function editEquipement(id, currentNom, currentStock) {

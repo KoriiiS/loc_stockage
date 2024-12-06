@@ -31,3 +31,23 @@ Une application simple et intuitive pour gérer les équipements en location, le
    ```bash
    git clone https://github.com/KoriiiS/loc_stockage.git
    cd loc_stockage
+2. Installez les dépendances :
+   ```bash
+    npm install
+3. Lancez l'application en mode développement :
+   ```bash
+    npm start
+
+## Technologies Utilisées
+- Electron : Pour créer une application de bureau multiplateforme.
+- Better-SQLite3 : Pour la gestion de la base de données SQLite.
+- HTML/CSS/JavaScript : Pour le rendu et l'interactivité.
+
+## Contribution
+
+Les contributions sont les bienvenues ! Si vous souhaitez apporter des améliorations ou corriger des bugs, suivez ces étapes :
+1- Forkez le projet.
+2- Créez une nouvelle branche 
+```bash
+  git checkout -b feature-nouvelle-fonctionnalite
+3- 

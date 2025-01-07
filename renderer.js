@@ -122,62 +122,67 @@ function navigateTo(view) {
 
     case "stock":
       try {
-        const equipements = require("./database").getEquipements();
-        const categories = require("./database").getCategories();
+        const equipementsParCategorie =
+          require("./database").getEquipementsParCategorie();
 
-        const categoriesOptions = categories
-          .map((c) => `<option value="${c.id}">${c.nom}</option>`)
+        // Générer l'affichage par catégorie
+        const equipementsHtml = equipementsParCategorie
+          .map((group) => {
+            const equipements = group.equipements
+              .map(
+                (e) => `
+                    <tr>
+                      <td>${e.id}</td>
+                      <td>${e.nom}</td>
+                      <td>${e.stock}</td>
+                      <td>
+                        <button onclick="editEquipement(${e.id}, '${e.nom}', ${e.stock})">Modifier</button>
+                        <button onclick="deleteEquipement(${e.id})">Supprimer</button>
+                      </td>
+                    </tr>
+                  `
+              )
+              .join("");
+
+            return `
+                <h3>${group.categorie}</h3>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Nom</th>
+                      <th>Quantité</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${
+                      equipements ||
+                      "<tr><td colspan='4'>Aucun équipement</td></tr>"
+                    }
+                  </tbody>
+                </table>
+              `;
+          })
           .join("");
 
-        const equipementsHtml = equipements
-          .map(
-            (e) => `
-                <tr>
-                  <td>${e.id}</td>
-                  <td>${e.nom}</td>
-                  <td>${e.stock}</td>
-                  <td>${
-                    categories.find((c) => c.id === e.categorie_id)?.nom ||
-                    "Aucune"
-                  }</td>
-                  <td>
-                    <button onclick="editEquipement(${e.id}, '${e.nom}', ${
-              e.stock
-            })">Modifier</button>
-                    <button onclick="deleteEquipement(${
-                      e.id
-                    })">Supprimer</button>
-                  </td>
-                </tr>
-              `
-          )
-          .join("");
-
+        // Ajouter un formulaire pour insérer un équipement
         content = `
             <h1>Stock</h1>
             <form onsubmit="addEquipement(event)">
-                <input type="text" id="nom" placeholder="Nom de l'équipement" required />
-                <input type="number" id="stock" placeholder="Quantité" required />
-                <select id="categorie" required>
-                    <option value="" disabled selected>Choisissez une catégorie</option>
-                    ${categoriesOptions}
-                </select>
-                <button type="submit">Ajouter</button>
+              <input type="text" id="nom" placeholder="Nom de l'équipement" required />
+              <input type="number" id="stock" placeholder="Quantité" required />
+              <select id="categorie" required>
+                <option value="" disabled selected>Choisissez une catégorie</option>
+                ${require("./database")
+                  .getCategories()
+                  .map((c) => `<option value="${c.id}">${c.nom}</option>`)
+                  .join("")}
+              </select>
+              <button type="submit">Ajouter</button>
             </form>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nom</th>
-                        <th>Quantité</th>
-                        <th>Catégorie</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${equipementsHtml}
-                </tbody>
-            </table>`;
+            ${equipementsHtml}
+          `;
       } catch (error) {
         console.error("Erreur lors du chargement des équipements :", error);
         content = "<p>Erreur : Impossible de charger le stock.</p>";
@@ -263,16 +268,34 @@ function cancelEdit() {
 }
 
 function deleteEquipement(id) {
-  // Ajouter un message de confirmation dans l'interface
-  const viewContainer = document.getElementById("view-container");
+  // Supprime tout message de confirmation déjà existant
+  const existingConfirmation = document.getElementById("confirmation");
+  if (existingConfirmation) {
+    existingConfirmation.remove();
+  }
+
+  // Ajoute le message de confirmation
   const confirmationHtml = `
-    <div id="confirmation">
+    <div id="confirmation" style="
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #2b2b2b;
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      text-align: center;
+    ">
       <p>Êtes-vous sûr de vouloir supprimer cet équipement ?</p>
-      <button onclick="confirmDeleteEquipement(${id})">Oui</button>
+      <button style="margin-right: 10px;" onclick="confirmDeleteEquipement(${id})">Oui</button>
       <button onclick="cancelDelete()">Non</button>
     </div>
   `;
 
+  const viewContainer = document.getElementById("view-container");
   viewContainer.insertAdjacentHTML("beforeend", confirmationHtml);
 }
 
@@ -284,7 +307,9 @@ function confirmDeleteEquipement(id) {
 
 function cancelDelete() {
   const confirmation = document.getElementById("confirmation");
-  if (confirmation) confirmation.remove(); // Supprimer le message de confirmation
+  if (confirmation) {
+    confirmation.remove();
+  }
 }
 
 function reloadView(view) {

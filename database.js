@@ -79,6 +79,22 @@ function getCategories() {
 function getEquipements() {
   return db.prepare("SELECT * FROM equipements").all();
 }
+function getEquipementsParCategorie() {
+  // Récupérer toutes les catégories
+  const categories = db.prepare("SELECT id, nom FROM categories").all();
+
+  // Récupérer les équipements et les regrouper par catégorie
+  return categories.map((categorie) => {
+    const equipements = db
+      .prepare("SELECT id, nom, stock FROM equipements WHERE categorie_id = ?")
+      .all(categorie.id);
+
+    return {
+      categorie: categorie.nom,
+      equipements: equipements,
+    };
+  });
+}
 
 function addEquipement(nom, stock, categorie_id) {
   db.prepare(
@@ -190,6 +206,7 @@ function clearHistorique() {
 // Exporter toutes les fonctions
 module.exports = {
   getEquipements,
+  getEquipementsParCategorie,
   addEquipement,
   updateEquipement,
   deleteEquipement,
